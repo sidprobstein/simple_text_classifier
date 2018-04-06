@@ -147,7 +147,9 @@ data could help this situation.
 Creates (trains) a classification model using one or text files 
 
 ## Usage
+```
 python train.py [-h] [-o OUTPUTFILE] [-c] [-s] [-r] [-t] [-g GRAMS] filespec
+```
 
 ## Arguments
 -h requests help
@@ -175,7 +177,9 @@ Determines the similarity between a classification model, and one or text files,
 using a reference IDF file 
 
 ## Usage
+```
 python classify.py [-h] [-c] [-s] [-g GRAMS] filespec
+```
 
 ## Arguments
 -h requests help
