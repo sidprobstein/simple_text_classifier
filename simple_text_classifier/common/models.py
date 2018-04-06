@@ -61,11 +61,11 @@ def train_classification_model(dictModel, sString, nGrams):
 def normalize_classification_model(dictModel):
 
     if not dictModel.has_key("_words"):
-        print "simple_text_classifier.common.models.py: normalize_classification_model: warning, _words not found in classification model"
+        print "normalize_classification_model: warning, _words not found in classification model"
         return None
     
     if not dictModel.has_key("_files"):
-        print "simple_text_classifier.common.models.py: normalize_classification_model: warning, _files not found in classification model"
+        print "normalize_classification_model: warning, _files not found in classification model"
         return None
     
     # file size
@@ -85,7 +85,6 @@ def normalize_classification_model(dictModel):
 
 def save_classification_model(dictModel, sFile):
 
-    print "simple_text_classifier.common.models.py: save_classification_model: writing:", sFile,
     try:
         fo = open(sFile, 'w')
     except Exception, e:   
@@ -99,7 +98,6 @@ def save_classification_model(dictModel, sFile):
         fo.close()
         return None
     fo.close()
-    print "ok"
 
     return True
  
@@ -109,7 +107,6 @@ def save_classification_model(dictModel, sFile):
 
 def load_classification_model(sFile):
 
-    print "simple_text_classifier.common.models.py: load_classification_model: reading:", sFile,
     try:
         fi = open(sFile, 'r')
     except Exception, e:   
@@ -123,7 +120,7 @@ def load_classification_model(sFile):
         fi.close()
         return None
     fi.close()
-    print "ok"
+
     return dictModel
  
 # end save_classification_model
@@ -139,13 +136,13 @@ def classify(dictInput, dictModel, dictIDF, nGrams):
         return None
 
     if dictInput.has_key("_words"):
-        print "simple_text_classifier.common.models.py: classify: error: input model is not normalized, _words key found"
+        print "classify: error: input model is not normalized, _words key found"
 
     if dictModel.has_key("_words"):
-        print "simple_text_classifier.common.models.py: classify: error: reference model is not normalized, _words key found"
+        print "classify: error: reference model is not normalized, _words key found"
 
     if dictIDF.has_key("_words"):
-        print "simple_text_classifier.common.models.py: classify: error: idf model is not normalized, _words key found"
+        print "classify: error: idf model is not normalized, _words key found"
         
     nHits = 0
     fScore = 0.0

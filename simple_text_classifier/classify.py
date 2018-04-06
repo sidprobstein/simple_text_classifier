@@ -24,7 +24,7 @@ def main(argv):
     parser.add_argument('-c', '--clean', action="store_true", help="remove special characters before classifying?")
     parser.add_argument('-s', '--stopwords', action="store_true", help="remove stopwords before classifying?")
     parser.add_argument('-g', '--grams', default="2", help="number of grams to store, defaults to 2")
-    parser.add_argument('filespec', help="path to the text file(s) you want to classify")
+    parser.add_argument('filespec', help="path to one or more text files to classify against the specified model")
     args = parser.parse_args()
        
     # initialize
@@ -33,17 +33,21 @@ def main(argv):
     ########################################
     # read the classification model
 
+    print "classify.py: reading input model:", args.model,
     dictModel = load_classification_model(args.model)
     if not dictModel:
         sys.exit(0)
+    print "ok"
         
     ########################################
     # read the idf model
 
+    print "classify.py: reading idf model:", args.model,
     dictIDF = load_classification_model(args.idf)    
     if not dictIDF:
         del dictModel # can be large
         sys.exit(0)
+    print "ok"
 
     ########################################
     # read the files to classify

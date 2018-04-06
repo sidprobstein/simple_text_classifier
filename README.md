@@ -6,13 +6,9 @@ Tools for classifying text files using models built with training examples
 * Supports basic removal of stop words and stop characters
 * Supports use of n-grams in the model - default is 2
  
-The training and classification logic are all in the utils/models.py package, 
-so you can incorporate them into any implementation. The included train.py and 
-classify.py import defs from these packages and can be used as a reference.
+The training and classification logic are all in the utils/models.py package, so you can incorporate them into any implementation. The included train.py and classify.py import defs from these packages and can be used as a reference.
 
-This project is intended as a teaching example for text processing with python 
-not a production text classifier. Try scikit-learn (http://scikit-learn.org/stable/) 
-for that.
+This project is intended as a teaching example for text processing with python - not a production text classifier. Try scikit-learn (http://scikit-learn.org/stable/) for that.
 
 ---
 
@@ -38,10 +34,7 @@ spair13:simple_text_classifier sid$
 
 3. The corpus consists of email messages in labeled folders
 
-For each group you want to train models and classify against, first 
-move ~20% of the documents into a separate directory with the name "test" added. 
-Leave the remaining 80% for training. The ones removed will be used to test the 
-classifier afterwards, and verify that it is working.
+For each group you want to train models and classify against, first move ~20% of the documents into a separate directory with the name "test" added. Leave the remaining 80% for training. The ones removed will be used to test the classifier (and models) and verify that they are working.
 
 ```
 spair13:20news-train sid$ pwd
@@ -69,46 +62,40 @@ drwxr-xr-x@  936 sid  staff  29952 Apr  4 21:35 talk.politics.mideast/
 drwxr-xr-x@  777 sid  staff  24864 Sep 26  2001 talk.politics.misc/
 drwxr-xr-x@  630 sid  staff  20160 Sep 26  2001 talk.religion.misc/
 ```
-4. Build a reference classification model known as the "IDF" (Inverse Document or 
-Database Frequency) from all the files. This data is essential to classification 
-as it provides term frequency information for all words, not just in documents within
-a particular subject, or in a set you want to classify. 
+4. Build a reference classification model known as the "IDF" (Inverse Document or Database Frequency) from all the files. This data is essential to classification as it provides term frequency information from as much text as possible. 
 
 The -r switch tells train.py to recurse through all subdirectories and put it all into one model.
 
 ```
-spair13:20news-train sid$ python ~/code/simple_text_classifier/simple_text_classifier/train.py -o ~/data/idf.g3.model -c -s -g 3 -r  "./*"
-train.py: reading: ./talk.politics.mideast/75895
+spair13:20news-train sid$ python ~/code/simple_text_classifier/simple_text_classifier/train.py -o ~/data/idf.g3.model -c -s -r -g 3 "./*"
+train.py: reading: ./talk.politics.mideast/75895 ok, training... ok
   ...etc...
-train.py: reading: ./talk.religion.misc/82815
-simple_text_classifier.common.models.py: save_classification_model: writing: /Users/sid/data/idf.g3.model ok
-spair13:20news-train sid$ ls -l ~/data/idf.g3.model
--rw-r--r--  1 sid  staff  158099358 Apr  6 15:37 /Users/sid/data/idf.g3.model
+train.py: reading: ./talk.religion.misc/82815 ok, training... ok
+train.py: finalizing model... ok
+train.py: saving model... ok
+spair13:20news-train sid$ ls -l ~/data/idf.g3.model 
+-rw-r--r--  1 sid  staff  158099358 Apr  6 19:04 /Users/sid/data/idf.g3.model
 ```
 
-5. Build a model for one of the groups, using the training set. We do not use
-the -r switch in this case, since the model should be trained using only the documents
-in the labeled directory.
+5. Build a model for one of the groups, using the training set. We do not use the -r switch in this case, since the model should be trained using only the documents in the labeled directory.
 
 ```
-spair13:talk.politics.mideast sid$ python ~/code/simple_text_classifier/simple_text_classifier/train.py -o ~/data/talk.politics.mideast.g3.model -c -s -g 3  "./*"
-train.py: reading: ./75895
-...etc...
-train.py: reading: ./76001
-simple_text_classifier.common.models.py: save_classification_model: writing: /Users/sid/data/talk.politics.mideast.g3.model ok
+spair13:talk.politics.mideast sid$ python ~/code/simple_text_classifier/simple_text_classifier/train.py -o ~/data/talk.politics.mideast.g3.model -c -s -g 3 "./*"
+train.py: reading: ./75895 ok, training... ok
+  ...etc...
+train.py: reading: ./76001 ok, training... ok
+train.py: finalizing model... ok
+train.py: saving model... ok
 spair13:talk.politics.mideast sid$ ls -l ~/data/talk.politics.mideast.g3.model 
--rw-r--r--  1 sid  staff  15313789 Apr  6 15:39 /Users/sid/data/talk.politics.mideast.g3.model
+-rw-r--r--  1 sid  staff  15313789 Apr  6 19:05 /Users/sid/data/talk.politics.mideast.g3.model
 ```
 
-6. Verify that the model works using the test set from the same group. Most if not
-all documents should match, with high scores.
+6. Verify that the model works using the test set from the same group. Most if not all documents should match, with high scores.
 
 ```
-spair13:talk.politics.mideast sid$ pwd
-/Users/sid/data/20news-test/talk.politics.mideast
 spair13:talk.politics.mideast sid$ python ~/code/simple_text_classifier/simple_text_classifier/classify.py -m ~/data/talk.politics.mideast.g3.model -i ~/data/idf.g3.model -c -s -g 3 "./*"
-simple_text_classifier.common.models.py: load_classification_model: reading: /Users/sid/data/talk.politics.mideast.g3.model ok
-simple_text_classifier.common.models.py: load_classification_model: reading: /Users/sid/data/idf.g3.model ok
+classify.py: reading input model: /Users/sid/data/talk.politics.mideast.g3.model ok
+classify.py: reading idf model: /Users/sid/data/talk.politics.mideast.g3.model ok
 classify.py: reading: ./75408 matches model: 1.00 *
 classify.py: reading: ./75913 matches model: 1.00 *
 classify.py: reading: ./75909 matches model: 1.00 *
@@ -118,15 +105,12 @@ classify.py: reading: ./75369 matches model: 1.00 *
 classify.py: reading: ./75394 matches model: 1.00 *
 ```
  
-7. Verify that the model works by classifying the test set from a different group.
-Few if any documents should match, with low scores.
+7. Verify that the model works by classifying the test set from a different group. Few if any documents should match, with low scores.
 
 ```
-spair13:rec.autos sid$ pwd
-/Users/sid/data/20news-test/rec.autos
 spair13:rec.autos sid$ python ~/code/simple_text_classifier/simple_text_classifier/classify.py -m ~/data/talk.politics.mideast.g3.model -i ~/data/idf.g3.model -c -s -g 3 "./*"
-simple_text_classifier.common.models.py: load_classification_model: reading: /Users/sid/data/talk.politics.mideast.g3.model ok
-simple_text_classifier.common.models.py: load_classification_model: reading: /Users/sid/data/idf.g3.model ok
+classify.py: reading input model: /Users/sid/data/talk.politics.mideast.g3.model ok
+classify.py: reading idf model: /Users/sid/data/talk.politics.mideast.g3.model ok
 classify.py: reading: ./101609 matches model: 0.20
 classify.py: reading: ./101601 matches model: 0.20
 classify.py: reading: ./101591 matches model: 0.15
@@ -137,11 +121,9 @@ classify.py: reading: ./101581 matches model: 0.20
 classify.py: reading: ./101592 matches model: 0.20
 ```
 
-Note that the classifier may have trouble distinguishing messages from groups with
-similar subjects like soc.religion.christian and alt.atheism. Adding more training
-data could help...  
+Note that the classifier may have trouble distinguishing messages from groups with similar subjects like soc.religion.christian and alt.atheism. Adding more training data could help...  
 
-8. Report any issues to the author
+8. Report any issues to the author..!
 
 ---
 
@@ -159,26 +141,20 @@ python train.py [-h] [-o OUTPUTFILE] [-c] [-s] [-r] [-t] [-g GRAMS] filespec
 -o OUTPUTFILE specifies the path to save the model file
 -c removes stop characters
 -s removes stop words
--r recurses through subdirectories; unless specified, train.py operates only on 
-the current directory
+-r recurses through subdirectories; unless specified, train.py operates only on the current directory
 -t specifies that the top 20 entries in the model should be displayed
--g GRAMS specifies the number of grams (word combinations) to use in modelling
-filespec must be the path to one or more text files
+-g GRAMS specifies the number of grams (word combinations) to use in modelling filespec must be the path to one or more text files
 ```
 
 ## Notes
-* Models are stored as text, and currently all words and optionally n-grams are
-stored, even if they never contribute; this will be fixed in a future release
-* Use the -r switch with all available training content to create an IDF model as 
-shown in the example (above)
-* Using -g 3 seems to produce optimal results on the 20 Groups set. Higher values
-are unlikely to produce recall on such a small amount of data.
+* Models are stored as text, and currently all words and optionally n-grams are stored, even if they never contribute; this will be fixed in a future release
+* Use the -r switch with all available training content to create an IDF model as shown in the example (above)
+* Using -g 3 seems to produce optimal results on the 20 Groups set. Higher values are unlikely to produce recall on such a small amount of data.
 
 ---
 
 # classify.py
-Determines the similarity between a classification model, and one or text files,
-using a reference IDF file 
+Determines the similarity between a classification model, and one or text files, using a reference IDF file 
 
 ## Usage
 ```
@@ -190,30 +166,28 @@ python classify.py [-h] [-c] [-s] [-g GRAMS] filespec
 -h requests help
 -c removes stop characters
 -s removes stop words
--g GRAMS specifies the number of grams (word combinations) to use in modelling
-filespec must be the path to one or more text files
+-g GRAMS specifies the number of grams (word combinations) to use in modelling filespec must be the path to one or more text files
 ```
 
 ## Notes
 * The score produced for each file ranges from 0 to 1.0
 * Scores over .667 are considered a match
-* Using -g 3 seems to produce optimal results on the 20 Groups set. Higher values
-are unlikely to produce recall on such a small amount of data.
+* Using -g 3 seems to produce optimal results on the 20 Groups set. Higher values are unlikely to produce recall on such a small amount of data.
 
 ---
 
-# TBD
+# To Do
 
-* Support other input formats
-* Handle email format
-* Use integers instead of strings
+* Use numbers instead of strings
 * Remove irrelevant words & grams
 * Faster scoring/sorting
 * Real confidence score
+* Support other input formats
+* Handle email format - currently the trainer learns email addresses, etc which is not ideal
 
 ---
 
-# Further Reading
+# Reference
 
 * https://en.wikipedia.org/wiki/Document_classification
 * https://en.wikipedia.org/wiki/Precision_and_recall

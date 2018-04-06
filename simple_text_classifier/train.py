@@ -55,7 +55,7 @@ def main(argv):
             print "train.py: warning, unexpected object type:", sFile
             continue
             
-        print "train.py: reading:", sFile
+        print "train.py: reading:", sFile,
         
         try:
             f = open(sFile, 'r')
@@ -70,8 +70,10 @@ def main(argv):
             print "train.py: error:", e
             f.close()
             continue
-        # don't need to keep this file open
+        
         f.close()
+
+        print "ok, training...",
         
         # convert lstBody to sBody
         # to do: move this to models...
@@ -96,21 +98,27 @@ def main(argv):
         if not dictModel:
             print "train.py: error, failed to build model!"
             sys.exit(0)
+            
+        print "ok"
     
             # to do: remove low value items from the model, i.e. anything lower than the threshold in classify.py
     
     # end for
     
     # finalize the model
+    print "train.py: finalizing model...",
     dictModel = normalize_classification_model(dictModel)
     if not dictModel:
         print "train.py: error, failed to normalize model!"
         sys.exit(0)
+    print "ok"
     
     # write out the model
+    print "train.py: saving model...",
     if not save_classification_model(dictModel, args.outputfile):
         print
         sys.exit(0)
+    print "ok"
     
     # report on top items
     if args.top:
