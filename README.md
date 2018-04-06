@@ -17,6 +17,7 @@ and classify.py import these packages and can be used as a reference implementat
 
 1. Download the simple_text_classifier distribution, and install it:
 
+'''
 spair13:simple_text_classifier sid$ pwd
 /Users/sid/code/simple_text_classifier
 
@@ -29,6 +30,7 @@ drwxr-xr-x  8 sid  staff   256 Apr  4 13:45 simple_text_classifier/
 drwxr-xr-x  3 sid  staff    96 Apr  4 21:38 tests/
 
 spair13:simple_text_classifier sid$ 
+'''
 
 2. Download the 20 Groups test using the URL above...
 
@@ -40,6 +42,7 @@ move ~20% of the documents into a separate directory with the name "test" added.
 The remaining 80% of the documents will be used to train the classifier. The ones
 removed will be used to test the classifier and verify that it is working.
 
+'''
 spair13:20news-train sid$ pwd
 /Users/sid/data/20news-train
 spair13:20news-train sid$ ls -l
@@ -64,6 +67,7 @@ drwxr-xr-x@  907 sid  staff  29024 May  7  2017 talk.politics.guns/
 drwxr-xr-x@  936 sid  staff  29952 Apr  4 21:35 talk.politics.mideast/
 drwxr-xr-x@  777 sid  staff  24864 Sep 26  2001 talk.politics.misc/
 drwxr-xr-x@  630 sid  staff  20160 Sep 26  2001 talk.religion.misc/
+'''
 
 4. Build a reference model known as the "IDF" (Inverse Document or Database Frequency) 
 from all the files. This data is essential to classification as it provides term
@@ -71,6 +75,7 @@ frequency information across the language in question.
 
 Note the use of the -r switch to recurse through all subdirectories.
 
+'''
 spair13:20news-train sid$ python ~/code/simple_text_classifier/simple_text_classifier/train.py -o ~/data/idf.g3.model -c -s -g 3 -r  "./*"
 train.py: reading: ./talk.politics.mideast/75895
 ...etc...
@@ -78,11 +83,13 @@ train.py: reading: ./talk.religion.misc/82815
 simple_text_classifier.common.models.py: save_classification_model: writing: /Users/sid/data/idf.g3.model ok
 spair13:20news-train sid$ ls -l ~/data/idf.g3.model
 -rw-r--r--  1 sid  staff  158099358 Apr  6 15:37 /Users/sid/data/idf.g3.model
+'''
 
 5. Build a model for one of the groups, using the training set. Here we do not use
 the -r switch, we are building a model just from the files inside one of the training 
 directories.
 
+'''
 spair13:talk.politics.mideast sid$ python ~/code/simple_text_classifier/simple_text_classifier/train.py -o ~/data/talk.politics.mideast.g3.model -c -s -g 3  "./*"
 train.py: reading: ./75895
 ...etc...
@@ -90,10 +97,12 @@ train.py: reading: ./76001
 simple_text_classifier.common.models.py: save_classification_model: writing: /Users/sid/data/talk.politics.mideast.g3.model ok
 spair13:talk.politics.mideast sid$ ls -l ~/data/talk.politics.mideast.g3.model 
 -rw-r--r--  1 sid  staff  15313789 Apr  6 15:39 /Users/sid/data/talk.politics.mideast.g3.model
+'''
 
 6. Verify that the model works using the test set from the same group. Most if not
 all documents should match with 90%+ confidence.
 
+'''
 spair13:talk.politics.mideast sid$ pwd
 /Users/sid/data/20news-test/talk.politics.mideast
 spair13:talk.politics.mideast sid$ python ~/code/simple_text_classifier/simple_text_classifier/classify.py -m ~/data/talk.politics.mideast.g3.model -i ~/data/idf.g3.model -c -s -g 3 "./*"
@@ -106,10 +115,12 @@ classify.py: reading: ./75930 matches model: 1.00 *
 classify.py: reading: ./75873 matches model: 1.00 *
 classify.py: reading: ./75369 matches model: 1.00 *
 classify.py: reading: ./75394 matches model: 1.00 *
+'''
  
 7. Verify that the model works by classifying the test set from a different group.
 Most if not all documents should NOT match, with low confidence (below 50%).
 
+'''
 spair13:rec.autos sid$ pwd
 /Users/sid/data/20news-test/rec.autos
 spair13:rec.autos sid$ python ~/code/simple_text_classifier/simple_text_classifier/classify.py -m ~/data/talk.politics.mideast.g3.model -i ~/data/idf.g3.model -c -s -g 3 "./*"
@@ -123,6 +134,7 @@ classify.py: reading: ./101555 matches model: 0.10
 classify.py: reading: ./101573 matches model: 0.15
 classify.py: reading: ./101581 matches model: 0.20
 classify.py: reading: ./101592 matches model: 0.20
+'''
 
 Note that the classifier may have trouble distinguishing messages from groups with
 overlapping subjects like soc.religion.christian and alt.atheism. Adding more training
@@ -164,7 +176,7 @@ Determines the similarity between a classification model, and one or text files,
 using a reference IDF file 
 
 ## Usage
-python classify.py [-h] [-c] [-s]  [-g GRAMS] filespec
+python classify.py [-h] [-c] [-s] [-g GRAMS] filespec
 
 ## Arguments
 -h requests help
