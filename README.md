@@ -154,6 +154,7 @@ python train.py [-h] [-o OUTPUTFILE] [-c] [-s] [-r] [-t] [-g GRAMS] filespec
 ```
 
 ## Arguments
+```
 -h requests help
 -o OUTPUTFILE specifies the path to save the model file
 -c removes stop characters
@@ -163,6 +164,7 @@ the current directory
 -t specifies that the top 20 entries in the model should be displayed
 -g GRAMS specifies the number of grams (word combinations) to use in modelling
 filespec must be the path to one or more text files
+```
 
 ## Notes
 * Models are stored as text, and currently all words and optionally n-grams are
@@ -184,11 +186,13 @@ python classify.py [-h] [-c] [-s] [-g GRAMS] filespec
 ```
 
 ## Arguments
+```
 -h requests help
 -c removes stop characters
 -s removes stop words
 -g GRAMS specifies the number of grams (word combinations) to use in modelling
 filespec must be the path to one or more text files
+```
 
 ## Notes
 * The score produced for each file ranges from 0 to 1.0
