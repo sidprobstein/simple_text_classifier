@@ -2,18 +2,21 @@
 
 Tools for classifying text files using models built with training examples
 
-* Performs well on the "20 Groups" test corpus (http://qwone.com/~jason/20Newsgroups/)
+* Performs well on the [20 Newsgroups Dataset] (http://qwone.com/~jason/20Newsgroups/)
 * Supports basic removal of stop words and stop characters
 * Supports use of n-grams in the model - default is 2
  
 The training and classification logic are all in the utils/models.py package, 
-so you can incorporate them into your own implementations as needed. The included train.py
-and classify.py import these packages and can be used as a reference implementation.
+so you can incorporate them into any implementation. The included train.py and 
+classify.py import defs from these packages and can be used as a reference.
 
+This project is intended as a teaching example for text processing with python 
+not a production text classifier. Try [scikit-learn] (http://scikit-learn.org/stable/) 
+for that.
 
 ---
 
-# Example using 20 Groups:
+# Example using 20 Newsgroups Dataset:
 
 1. Download the simple_text_classifier distribution, and install it:
 
@@ -27,20 +30,18 @@ total 24
 -rw-r--r--  1 sid  staff   780 Apr  6 12:46 README.md
 -rw-r--r--  1 sid  staff   780 Apr  6 12:45 README.txt
 drwxr-xr-x  8 sid  staff   256 Apr  4 13:45 simple_text_classifier/
-drwxr-xr-x  3 sid  staff    96 Apr  4 21:38 tests/
 
 spair13:simple_text_classifier sid$ 
 ```
 
-2. Download the 20 Groups test using the URL above...
+2. Download the 20 Newsgroups Data Set using the URL above...
 
-3. The corpus consists of messages from 20 news groups, in email format, each in 
-a labelled folder. 
+3. The corpus consists of email messages in labeled folders
 
-For each group you want to train models and classify against, 
+For each group you want to train models and classify against, first 
 move ~20% of the documents into a separate directory with the name "test" added. 
-The remaining 80% of the documents will be used to train the classifier. The ones
-removed will be used to test the classifier and verify that it is working.
+Leave the remaining 80% for training. The ones removed will be used to test the 
+classifier afterwards, and verify that it is working.
 
 ```
 spair13:20news-train sid$ pwd
@@ -68,25 +69,26 @@ drwxr-xr-x@  936 sid  staff  29952 Apr  4 21:35 talk.politics.mideast/
 drwxr-xr-x@  777 sid  staff  24864 Sep 26  2001 talk.politics.misc/
 drwxr-xr-x@  630 sid  staff  20160 Sep 26  2001 talk.religion.misc/
 ```
-4. Build a reference model known as the "IDF" (Inverse Document or Database Frequency) 
-from all the files. This data is essential to classification as it provides term
-frequency information across the language in question. 
+4. Build a reference classification model known as the "IDF" (Inverse Document or 
+Database Frequency) from all the files. This data is essential to classification 
+as it provides term frequency information for all words, not just in documents within
+a particular subject, or in a set you want to classify. 
 
-Note the use of the -r switch to recurse through all subdirectories.
+The -r switch tells train.py to recurse through all subdirectories and put it all into one model.
 
 ```
 spair13:20news-train sid$ python ~/code/simple_text_classifier/simple_text_classifier/train.py -o ~/data/idf.g3.model -c -s -g 3 -r  "./*"
 train.py: reading: ./talk.politics.mideast/75895
-...etc...
+  ...etc...
 train.py: reading: ./talk.religion.misc/82815
 simple_text_classifier.common.models.py: save_classification_model: writing: /Users/sid/data/idf.g3.model ok
 spair13:20news-train sid$ ls -l ~/data/idf.g3.model
 -rw-r--r--  1 sid  staff  158099358 Apr  6 15:37 /Users/sid/data/idf.g3.model
 ```
 
-5. Build a model for one of the groups, using the training set. Here we do not use
-the -r switch, we are building a model just from the files inside one of the training 
-directories.
+5. Build a model for one of the groups, using the training set. We do not use
+the -r switch in this case, since the model should be trained using only the documents
+in the labeled directory.
 
 ```
 spair13:talk.politics.mideast sid$ python ~/code/simple_text_classifier/simple_text_classifier/train.py -o ~/data/talk.politics.mideast.g3.model -c -s -g 3  "./*"
@@ -99,7 +101,7 @@ spair13:talk.politics.mideast sid$ ls -l ~/data/talk.politics.mideast.g3.model
 ```
 
 6. Verify that the model works using the test set from the same group. Most if not
-all documents should match with 90%+ confidence.
+all documents should match, with high scores.
 
 ```
 spair13:talk.politics.mideast sid$ pwd
@@ -117,7 +119,7 @@ classify.py: reading: ./75394 matches model: 1.00 *
 ```
  
 7. Verify that the model works by classifying the test set from a different group.
-Most if not all documents should NOT match, with low confidence (below 50%).
+Few if any documents should match, with low scores.
 
 ```
 spair13:rec.autos sid$ pwd
@@ -136,10 +138,10 @@ classify.py: reading: ./101592 matches model: 0.20
 ```
 
 Note that the classifier may have trouble distinguishing messages from groups with
-overlapping subjects like soc.religion.christian and alt.atheism. Adding more training
-data could help this situation. 
+similar subjects like soc.religion.christian and alt.atheism. Adding more training
+data could help...  
 
-8. Report any issues to the author! Many thanks!
+8. Report any issues to the author
 
 ---
 
@@ -193,6 +195,17 @@ filespec must be the path to one or more text files
 * Scores over .667 are considered a match
 * Using -g 3 seems to produce optimal results on the 20 Groups set. Higher values
 are unlikely to produce recall on such a small amount of data.
+
+---
+
+# TBD
+
+* Support other input formats
+* Handle email format
+* Use integers instead of strings
+* Remove irrelevant words & grams
+* Faster scoring/sorting
+* Real confidence score
 
 ---
 
