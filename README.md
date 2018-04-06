@@ -2,7 +2,7 @@
 
 Tools for classifying text files using models built with training examples
 
-* Performs well on the [20 Newsgroups Dataset] (http://qwone.com/~jason/20Newsgroups/)
+* Performs well on the 20 Newsgroups Dataset (http://qwone.com/~jason/20Newsgroups/)
 * Supports basic removal of stop words and stop characters
 * Supports use of n-grams in the model - default is 2
  
@@ -11,7 +11,7 @@ so you can incorporate them into any implementation. The included train.py and
 classify.py import defs from these packages and can be used as a reference.
 
 This project is intended as a teaching example for text processing with python 
-not a production text classifier. Try [scikit-learn] (http://scikit-learn.org/stable/) 
+not a production text classifier. Try scikit-learn (http://scikit-learn.org/stable/) 
 for that.
 
 ---
