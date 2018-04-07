@@ -24,6 +24,7 @@ def main(argv):
     parser.add_argument('-c', '--clean', action="store_true", help="remove special characters before classifying?")
     parser.add_argument('-s', '--stopwords', action="store_true", help="remove stopwords before classifying?")
     parser.add_argument('-g', '--grams', default="2", help="number of grams to store, defaults to 2")
+    parser.add_argument('-r', '--recurse', action="store_true", help="recursively train on files in sub-directories")
     parser.add_argument('filespec', help="path to one or more text files to classify against the specified model")
     args = parser.parse_args()
        
@@ -69,31 +70,29 @@ def main(argv):
             
     for sFile in lstFiles:
                 
+        # process the files
         if os.path.isdir(sFile):
-            # handle directory by adding to list
-            for sNewFile in glob.glob(sFile + '/*'):
-                lstFiles.append(sNewFile)
+            if args.recurse:
+                # recurse into directory
+                for sNewFile in glob.glob(sFile + '/*'):
+                    lstFiles.append(sNewFile)
             continue
         
-        if not os.path.isfile(sFile):
-            print "classify.py: warning: ignoring unexpected object type:", sFile
-            continue
-            
         print "classify.py: reading:", sFile, 
-        
         try:
             f = open(sFile, 'r')
         except Exception, e:
-            print "classify.py: error:", e
+            print "error:", e
             continue
         
         # read the file
         try:
             lstBody = f.readlines()
         except Exception, e:
-            print "classify.py: error:", e
+            print "error:", e
             f.close()
             continue
+        f.close()
     
         # convert lstBody to sBody
         sBody = ""
@@ -116,11 +115,12 @@ def main(argv):
         if dictInput:
             dictInput = normalize_classification_model(dictInput)
         else:
-            print "classify.py: warning: input model is empty"
+            print "warning: input model is empty"
             continue
+        
             
         fScore = classify(dictInput, dictModel, dictIDF, nGrams)
-        print "matches model:", 
+        print "ok, matches model:", 
         print "%1.2f" % fScore,
         if fScore > .667:
             print "*"

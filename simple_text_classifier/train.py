@@ -21,8 +21,8 @@ def main(argv):
     parser = argparse.ArgumentParser(description="Train a classification model from one or more text files")
     parser.add_argument('-o', '--outputfile', default="trained.model", help="name of the classification model file")
     parser.add_argument('-c', '--clean', action="store_true", help="remove special characters before classifying?")
-    parser.add_argument('-s', '--stopwords', action="store_true", help="remove stopwords before classifying?")
-    parser.add_argument('-r', '--recurse', action="store_true", help="recursively train on files in subdirectories")
+    parser.add_argument('-s', '--stopwords', action="store_true", help="remove stop words before classifying?")
+    parser.add_argument('-r', '--recurse', action="store_true", help="recursively train on files in sub-directories")
     parser.add_argument('-t', '--top', action="store_true", help="show top model entries after classifying ")
     parser.add_argument('-g', '--grams', default="2", help="number of grams to store, defaults to 2")
     parser.add_argument('filespec', help="path to the text files to train a classification model with")
@@ -46,34 +46,31 @@ def main(argv):
         
         # process the files
         if os.path.isdir(sFile):
-            # handle directory
-            for sNewFile in glob.glob(sFile + '/*'):
-                lstFiles.append(sNewFile)
+            if args.recurse:
+                # recurse into directory
+                for sNewFile in glob.glob(sFile + '/*'):
+                    lstFiles.append(sNewFile)
             continue
-        
-        if not os.path.isfile(sFile):
-            print "train.py: warning, unexpected object type:", sFile
-            continue
-            
+                    
         print "train.py: reading:", sFile,
         
         try:
             f = open(sFile, 'r')
         except Exception, e:
-            print "train.py: error:", e
+            print "error:", e
             continue
         
         # read the file
         try:
             lstBody = f.readlines()
         except Exception, e:
-            print "train.py: error:", e
+            print "error:", e
             f.close()
             continue
         
         f.close()
 
-        print "ok, training...",
+        print "ok, training:",
         
         # convert lstBody to sBody
         # to do: move this to models...
@@ -96,7 +93,7 @@ def main(argv):
         # build model
         dictModel = train_classification_model(dictModel, sBody, nGrams)
         if not dictModel:
-            print "train.py: error, failed to build model!"
+            print "error, failed to build model!"
             sys.exit(0)
             
         print "ok"
@@ -106,7 +103,7 @@ def main(argv):
     # end for
     
     # finalize the model
-    print "train.py: finalizing model...",
+    print "train.py: finalizing model:",
     dictModel = normalize_classification_model(dictModel)
     if not dictModel:
         print "train.py: error, failed to normalize model!"
@@ -114,7 +111,7 @@ def main(argv):
     print "ok"
     
     # write out the model
-    print "train.py: saving model...",
+    print "train.py: saving model:", args.outputfile,
     if not save_classification_model(dictModel, args.outputfile):
         print
         sys.exit(0)

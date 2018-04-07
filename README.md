@@ -96,13 +96,13 @@ spair13:talk.politics.mideast sid$ ls -l ~/data/talk.politics.mideast.g3.model
 spair13:talk.politics.mideast sid$ python ~/code/simple_text_classifier/simple_text_classifier/classify.py -m ~/data/talk.politics.mideast.g3.model -i ~/data/idf.g3.model -c -s -g 3 "./*"
 classify.py: reading input model: /Users/sid/data/talk.politics.mideast.g3.model ok
 classify.py: reading idf model: /Users/sid/data/talk.politics.mideast.g3.model ok
-classify.py: reading: ./75408 matches model: 1.00 *
-classify.py: reading: ./75913 matches model: 1.00 *
-classify.py: reading: ./75909 matches model: 1.00 *
-classify.py: reading: ./75930 matches model: 1.00 *
-classify.py: reading: ./75873 matches model: 1.00 *
-classify.py: reading: ./75369 matches model: 1.00 *
-classify.py: reading: ./75394 matches model: 1.00 *
+classify.py: reading: ./75408 ok, matches model: 1.00 *
+classify.py: reading: ./75913 ok, matches model: 1.00 *
+classify.py: reading: ./75909 ok, matches model: 1.00 *
+classify.py: reading: ./75930 ok, matches model: 1.00 *
+classify.py: reading: ./75873 ok, matches model: 1.00 *
+classify.py: reading: ./75369 ok, matches model: 1.00 *
+classify.py: reading: ./75394 ok, matches model: 1.00 *
 ```
  
 7. Verify that the model works by classifying the test set from a different group. Few if any documents should match, with low scores.
@@ -111,14 +111,14 @@ classify.py: reading: ./75394 matches model: 1.00 *
 spair13:rec.autos sid$ python ~/code/simple_text_classifier/simple_text_classifier/classify.py -m ~/data/talk.politics.mideast.g3.model -i ~/data/idf.g3.model -c -s -g 3 "./*"
 classify.py: reading input model: /Users/sid/data/talk.politics.mideast.g3.model ok
 classify.py: reading idf model: /Users/sid/data/talk.politics.mideast.g3.model ok
-classify.py: reading: ./101609 matches model: 0.20
-classify.py: reading: ./101601 matches model: 0.20
-classify.py: reading: ./101591 matches model: 0.15
-classify.py: reading: ./101597 matches model: 0.25
-classify.py: reading: ./101555 matches model: 0.10
-classify.py: reading: ./101573 matches model: 0.15
-classify.py: reading: ./101581 matches model: 0.20
-classify.py: reading: ./101592 matches model: 0.20
+classify.py: reading: ./101609 ok, matches model: 0.20
+classify.py: reading: ./101601 ok, matches model: 0.20
+classify.py: reading: ./101591 ok, matches model: 0.15
+classify.py: reading: ./101597 ok, matches model: 0.25
+classify.py: reading: ./101555 ok, matches model: 0.10
+classify.py: reading: ./101573 ok, matches model: 0.15
+classify.py: reading: ./101581 ok, matches model: 0.20
+classify.py: reading: ./101592 ok, matches model: 0.20
 ```
 
 Note that the classifier may have trouble distinguishing messages from groups with similar subjects like soc.religion.christian and alt.atheism. Adding more training data could help...  
@@ -141,9 +141,9 @@ python train.py [-h] [-o OUTPUTFILE] [-c] [-s] [-r] [-t] [-g GRAMS] filespec
 -o OUTPUTFILE specifies the path to save the model file
 -c removes stop characters
 -s removes stop words
+-g GRAMS specifies the number of grams (word combinations) to use in modelling filespec must be the path to one or more text files
 -r recurses through subdirectories; unless specified, train.py operates only on the current directory
 -t specifies that the top 20 entries in the model should be displayed
--g GRAMS specifies the number of grams (word combinations) to use in modelling filespec must be the path to one or more text files
 ```
 
 ## Notes
@@ -167,6 +167,7 @@ python classify.py [-h] [-c] [-s] [-g GRAMS] filespec
 -c removes stop characters
 -s removes stop words
 -g GRAMS specifies the number of grams (word combinations) to use in modelling filespec must be the path to one or more text files
+-r recurses through subdirectories; unless specified, train.py operates only on the current directory
 ```
 
 ## Notes
