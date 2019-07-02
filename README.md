@@ -32,7 +32,7 @@ spair13:simple_text_classifier sid$
 
 2. Download the 20 Newsgroups Data Set using the URL above...
 
-3. Get a stopwords file. Name it stopwords.txt
+3. Get a stopwords file, one stop word per line. Name it stopwords.txt. Place it in the same directory as the data to train or classify.
 
 4. The corpus consists of email messages in labeled folders
 
@@ -142,7 +142,7 @@ python train.py [-h] [-o OUTPUTFILE] [-c] [-s] [-r] [-t] [-g GRAMS] filespec
 -h requests help
 -o OUTPUTFILE specifies the path to save the model file
 -c removes stop characters
--s removes stop words
+-s removes stop words using stopwords.txt in current directory
 -g GRAMS specifies the number of grams (word combinations) to use in modelling filespec must be the path to one or more text files
 -r recurses through subdirectories; unless specified, train.py operates only on the current directory
 -t stores only top 10 for each gram; use -t with classify.py for best results
@@ -167,7 +167,7 @@ python classify.py [-t] [-h] [-c] [-s] [-g GRAMS] filespec
 ```
 -h requests help
 -c removes stop characters
--s removes stop words
+-s removes stop words using stopwords.txt in current directory
 -t uses model trained with -t option, see above
 -g GRAMS specifies the number of grams (word combinations) to use in modelling filespec must be the path to one or more text files
 -r recurses through subdirectories; unless specified, train.py operates only on the current directory
@@ -182,12 +182,7 @@ python classify.py [-t] [-h] [-c] [-s] [-g GRAMS] filespec
 
 # To Do
 
-* Use numbers instead of strings
-* Remove irrelevant words & grams
-* Faster scoring/sorting
-* Real confidence score
-* Support other input formats
-* Handle email format - currently the trainer learns email addresses, etc which is not ideal
+* Handle email format better - currently the trainer learns email addresses, etc which is not ideal
 
 ---
 
