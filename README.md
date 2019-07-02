@@ -32,7 +32,9 @@ spair13:simple_text_classifier sid$
 
 2. Download the 20 Newsgroups Data Set using the URL above...
 
-3. The corpus consists of email messages in labeled folders
+3. Get a stopwords file. Name it stopwords.txt
+
+4. The corpus consists of email messages in labeled folders
 
 For each group you want to train models and classify against, first move ~20% of the documents into a separate directory with the name "test" added. Leave the remaining 80% for training. The ones removed will be used to test the classifier (and models) and verify that they are working.
 
@@ -62,7 +64,7 @@ drwxr-xr-x@  936 sid  staff  29952 Apr  4 21:35 talk.politics.mideast/
 drwxr-xr-x@  777 sid  staff  24864 Sep 26  2001 talk.politics.misc/
 drwxr-xr-x@  630 sid  staff  20160 Sep 26  2001 talk.religion.misc/
 ```
-4. Build a reference classification model known as the "IDF" (Inverse Document or Database Frequency) from all the files. This data is essential to classification as it provides term frequency information from as much text as possible. 
+5. Build a reference classification model that models all the files. This data is essential to classification as it is essential to the "inverse document frequency" or IDF part of the classification relevancy (or 'fit') calculation.
 
 The -r switch tells train.py to recurse through all subdirectories and put it all into one model.
 
@@ -77,7 +79,7 @@ spair13:20news-train sid$ ls -l ~/data/idf.g3.model
 -rw-r--r--  1 sid  staff  158099358 Apr  6 19:04 /Users/sid/data/idf.g3.model
 ```
 
-5. Build a model for one of the groups, using the training set. We do not use the -r switch in this case, since the model should be trained using only the documents in the labeled directory.
+6. Build a model for one of the groups, using the training set. We do not use the -r switch in this case, since the model should be trained using only the documents in the labeled directory.
 
 ```
 spair13:talk.politics.mideast sid$ python ~/code/simple_text_classifier/simple_text_classifier/train.py -o ~/data/talk.politics.mideast.g3.model -c -s -g 3 "./*"
@@ -90,7 +92,7 @@ spair13:talk.politics.mideast sid$ ls -l ~/data/talk.politics.mideast.g3.model
 -rw-r--r--  1 sid  staff  15313789 Apr  6 19:05 /Users/sid/data/talk.politics.mideast.g3.model
 ```
 
-6. Verify that the model works using the test set from the same group. Most if not all documents should match, with high scores.
+7. Verify that the model works using the test set from the same group. Most if not all documents should match, with high scores.
 
 ```
 spair13:talk.politics.mideast sid$ python ~/code/simple_text_classifier/simple_text_classifier/classify.py -m ~/data/talk.politics.mideast.g3.model -i ~/data/idf.g3.model -c -s -g 3 "./*"
@@ -105,7 +107,7 @@ classify.py: reading: ./75369 ok, matches model: 1.00 *
 classify.py: reading: ./75394 ok, matches model: 1.00 *
 ```
  
-7. Verify that the model works by classifying the test set from a different group. Few if any documents should match, with low scores.
+8. Verify that the model works by classifying the test set from a different group. Few if any documents should match, with low scores.
 
 ```
 spair13:rec.autos sid$ python ~/code/simple_text_classifier/simple_text_classifier/classify.py -m ~/data/talk.politics.mideast.g3.model -i ~/data/idf.g3.model -c -s -g 3 "./*"
@@ -123,7 +125,7 @@ classify.py: reading: ./101592 ok, matches model: 0.20
 
 Note that the classifier may have trouble distinguishing messages from groups with similar subjects like soc.religion.christian and alt.atheism. Adding more training data could help...  
 
-8. Report any issues to the author..!
+9. Report any issues to the author..!
 
 ---
 
@@ -143,7 +145,7 @@ python train.py [-h] [-o OUTPUTFILE] [-c] [-s] [-r] [-t] [-g GRAMS] filespec
 -s removes stop words
 -g GRAMS specifies the number of grams (word combinations) to use in modelling filespec must be the path to one or more text files
 -r recurses through subdirectories; unless specified, train.py operates only on the current directory
--t specifies that the top 20 entries in the model should be displayed
+-t stores only top 10 for each gram; use -t with classify.py for best results
 ```
 
 ## Notes
@@ -158,7 +160,7 @@ Determines the similarity between a classification model, and one or text files,
 
 ## Usage
 ```
-python classify.py [-h] [-c] [-s] [-g GRAMS] filespec
+python classify.py [-t] [-h] [-c] [-s] [-g GRAMS] filespec
 ```
 
 ## Arguments
@@ -166,6 +168,7 @@ python classify.py [-h] [-c] [-s] [-g GRAMS] filespec
 -h requests help
 -c removes stop characters
 -s removes stop words
+-t uses model trained with -t option, see above
 -g GRAMS specifies the number of grams (word combinations) to use in modelling filespec must be the path to one or more text files
 -r recurses through subdirectories; unless specified, train.py operates only on the current directory
 ```

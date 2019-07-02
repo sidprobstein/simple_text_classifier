@@ -11,9 +11,8 @@ import glob
 import sys
 import os
 
-from common.utils import remove_stop_words, remove_stop_chars
-from common.models import train_classification_model, normalize_classification_model, save_classification_model
-from common.models import dump_top, dump_bottom
+from common.utils import *
+from common.models import *
 
 #############################################    
 
@@ -23,7 +22,7 @@ def main(argv):
     parser.add_argument('-c', '--clean', action="store_true", help="remove special characters before classifying?")
     parser.add_argument('-s', '--stopwords', action="store_true", help="remove stop words before classifying?")
     parser.add_argument('-r', '--recurse', action="store_true", help="recursively train on files in sub-directories")
-    parser.add_argument('-t', '--top', action="store_true", help="show top model entries after classifying ")
+    parser.add_argument('-t', '--top', action="store_true", help="store top 10 for each gram only")
     parser.add_argument('-g', '--grams', default="2", help="number of grams to store, defaults to 2")
     parser.add_argument('filespec', help="path to the text files to train a classification model with")
     args = parser.parse_args()
@@ -88,7 +87,8 @@ def main(argv):
                     
         # remove stopwords, if requested
         if args.stopwords:
-            sBody = remove_stop_words(sBody)
+            list_stopwords = load_stopword_list('stopwords.txt')
+            sBody = remove_stop_words(sBody, list_stopwords)
         
         # build model
         dictModel = train_classification_model(dictModel, sBody, nGrams)
@@ -97,14 +97,16 @@ def main(argv):
             sys.exit(0)
             
         print "ok"
-    
-            # to do: remove low value items from the model, i.e. anything lower than the threshold in classify.py
-    
+        
     # end for
     
     # finalize the model
     print "train.py: finalizing model:",
-    dictModel = normalize_classification_model(dictModel)
+    if args.top:
+        print "(top only)",
+        dictModel = normalize_classification_model(dictModel, True)
+    else:
+        dictModel = normalize_classification_model(dictModel)
     if not dictModel:
         print "train.py: error, failed to normalize model!"
         sys.exit(0)
@@ -116,17 +118,6 @@ def main(argv):
         print
         sys.exit(0)
     print "ok"
-    
-    # report on top items
-    if args.top:
-        print "train.py: top 20 model entries..."
-        print "--------------------------------------------------------------------------------"
-        dump_top(dictModel, 20)
-        print "--------------------------------------------------------------------------------"
-        print "train.py: bottom 20 model entries..."
-        print "--------------------------------------------------------------------------------"
-        dump_bottom(dictModel, 20)
-        print "--------------------------------------------------------------------------------"
     
     # delete, since these can be large    
     del dictModel
