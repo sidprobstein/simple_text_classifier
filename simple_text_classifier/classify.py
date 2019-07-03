@@ -44,9 +44,8 @@ def main(argv):
     print "ok", len(dictModel), "grams loaded"
         
     ########################################
-    # read the idf model
+    # read the idf model and handle -top
 
-    print args.idf
     if args.idf:
         print "classify.py: reading idf model:", args.idf,
         dictIDF = load_classification_model(args.idf)    
@@ -55,6 +54,14 @@ def main(argv):
             del dictIDF # can be large
             sys.exit(0)
         print "ok", len(dictIDF), "grams loaded"
+
+    if args.idf and args.top:
+        print "classify.py: warning: -top specified, -idf specified but not required, ignoring"
+    
+    if not args.top and not args.idf:
+        print "classify.py: error: -idf required but not specified."
+        sys.exit(0)
+        
     ########################################
     # read the files to classify
     
@@ -72,15 +79,15 @@ def main(argv):
         sys.exit(0)
 
     if args.stopwords:
-        print "classify.py: loading stopwords:", 
+        print "classify.py: loading: stopwords.txt:", 
         list_stopwords = load_stopword_list('stopwords.txt')
         if not list_stopwords:
             print "error"
             del dictIDF
             del dictModel
             sys.exit(0)
-        print "ok"
-
+        print "ok", str(len(list_stopwords)), "terms loaded"
+            
     ########################################
     # iterate through filespec, processing each file
             
@@ -94,7 +101,7 @@ def main(argv):
                     lstFiles.append(sNewFile)
             continue
         
-        print "classify.py: reading:", sFile, 
+        print "classify.py:", sFile, 
         try:
             f = open(sFile, 'r')
         except Exception, e:
@@ -120,34 +127,34 @@ def main(argv):
         # remove stop chars, if requested
         if args.clean:
             sBody = remove_stop_chars(sBody)
-        
-        # remove stopwords, if requested
-        if args.stopwords:
-            sBody = remove_stop_words(sBody, list_stopwords)
-            
+                    
         dictInput = {}
         dictInput = train_classification_model(dictInput, sBody, nGrams)
-        if dictInput:
-            dictInput = normalize_classification_model(dictInput)
-        else:
-            print "warning: input model is empty"
-            continue
+        # don't use -top for normalization when classifying (only training)
+        dictInput = normalize_classification_model(dictInput, False, list_stopwords)
         
         if args.top:
-            list_classify = classify(dictInput, dictModel, None, nGrams, True)
+            list_classify = classify_top(dictInput, dictModel, nGrams)
         else:
-            list_classify = classify(dictInput, dictModel, dictIDF, nGrams, False)
+            list_classify = classify(dictInput, dictModel, dictIDF, nGrams)
         fScore = list_classify[0]
         dictExplain = list_classify[1]
-        print "ok, matches model:", 
+        print "confidence:", 
         print "%1.2f" % fScore,
+        mark = "\t"
         if fScore > .667:
-            print "*", 
- 
+            mark = "*"
+        if fScore > .79:
+            mark = "**"
+        if fScore > .89:
+            mark = "***"
+        print mark,
         if args.explain:
+            print "\t[",
             lstExplain = sorted(dictExplain.iteritems(), key=operator.itemgetter(1), reverse=True)
             for (term, count) in lstExplain:
                 print term, "(" + str(count) + ")",
+            print "]",
             
         print
 

@@ -18,6 +18,8 @@ from common.models import *
 
 def main(argv):
     parser = argparse.ArgumentParser(description="Inspect a classification model")
+    parser.add_argument('-g', '--grams', default="0", help="number of grams to inspect, defaults to all")
+    parser.add_argument('-n', '--number', default="100", help="number of top results to show, defaults to 100")
     parser.add_argument('filespec', help="path to the classification model(s)")
     args = parser.parse_args()
     
@@ -50,9 +52,9 @@ def main(argv):
         if not dictModel:
             print "error: couldn't load:", sFile
             sys.exit(0)
-        print "ok", len(dictModel), "grams loaded"
+        print "ok", len(dictModel), "grams loaded, dumping top", args.number, str(args.grams) + "-grams"
         print "--------------------------------------------------------------------------------"
-        dump_top(dictModel, 500)
+        dump_top(dictModel, args.number, args.grams)
         print "--------------------------------------------------------------------------------"
     
     # delete, since these can be large    

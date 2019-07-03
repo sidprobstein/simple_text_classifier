@@ -14,8 +14,17 @@ def remove_stop_chars(sString):
     for token in sString:
         if token.isalpha():
             sCleaned = sCleaned + token
+            continue
+        if token == "'":
+            sCleaned = sCleaned + token
+            continue
         if ord(token) < 65:
             sCleaned = sCleaned + ' '
+
+    # remove 's
+    if sCleaned.find("'s") > -1:
+        sCleaned = sCleaned.replace("'s", "")
+                
     return sCleaned.strip()
 
 # end removeStopChars
@@ -38,7 +47,6 @@ def load_stopword_list(filename):
         lstBody = f.readlines()
     except Exception, e:
         print "error reading:", e
-        f.close()
         
     f.close()
     
@@ -48,22 +56,6 @@ def load_stopword_list(filename):
         
     return lst_stopwords
     
-#############################################        
-
-def remove_stop_words(sString, stopword_list = None):
-
-    sCleaned = ""
-    for token in sString.split():
-        if stopword_list:
-            if token not in stopword_list:
-                # also filter anything with less than 3 tokens
-                if len(token) > 1:
-                    sCleaned = sCleaned + token + " "
-                        
-    return sCleaned.strip()
-
-# end removeStopWords
-
 #############################################    
 
 def prepare_string(sString):
@@ -88,6 +80,6 @@ def count_grams(term):
           if c == '_':
               grams = grams + 1
               
-    return grams
+    return int(grams)
     
 # end prepare_string

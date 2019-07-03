@@ -29,8 +29,17 @@ def main(argv):
     
     # initialize
     lstFiles = []
+    list_stopwords = []
     dictModel = {}
     nGrams = int(args.grams)
+
+    if args.stopwords:
+        print "train.py: loading: stopwords.txt:", 
+        list_stopwords = load_stopword_list('stopwords.txt')
+        if not list_stopwords:
+            print "error: failed to load stopwords.txt"
+            sys.exit(0)
+        print "ok", str(len(list_stopwords)), "terms loaded"
     
     if args.filespec:
         lstFiles = glob.glob(args.filespec)
@@ -69,10 +78,9 @@ def main(argv):
         
         f.close()
 
-        print "ok, training:",
+        print "ok"
         
         # convert lstBody to sBody
-        # to do: move this to models...
         sBody = ' '.join(lstBody)
         sBody = sBody.replace("\n","")
         sBody = sBody.strip()
@@ -84,40 +92,33 @@ def main(argv):
         # remove stop chars, if requested
         if args.clean:
             sBody = remove_stop_chars(sBody)
-                    
-        # remove stopwords, if requested
-        if args.stopwords:
-            list_stopwords = load_stopword_list('stopwords.txt')
-            sBody = remove_stop_words(sBody, list_stopwords)
-        
+                            
         # build model
         dictModel = train_classification_model(dictModel, sBody, nGrams)
         if not dictModel:
-            print "error, failed to build model!"
+            print "classify.py: error: training failed"
             sys.exit(0)
-            
-        print "ok"
         
     # end for
     
     # finalize the model
-    print "train.py: finalizing model:",
+    print "train.py: finalizing:",
     if args.top:
         print "(top only)",
-        dictModel = normalize_classification_model(dictModel, True)
+        dictModel = normalize_classification_model(dictModel, True, list_stopwords)
     else:
-        dictModel = normalize_classification_model(dictModel)
+        dictModel = normalize_classification_model(dictModel, False, list_stopwords)
     if not dictModel:
         print "train.py: error, failed to normalize model!"
         sys.exit(0)
     print "ok"
     
     # write out the model
-    print "train.py: saving model:", args.outputfile,
+    print "train.py: saving:", args.outputfile, 
     if not save_classification_model(dictModel, args.outputfile):
         print
         sys.exit(0)
-    print "ok"
+    print "ok", str(len(dictModel)), "terms written" 
     
     # delete, since these can be large    
     del dictModel
