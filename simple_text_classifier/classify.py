@@ -17,78 +17,72 @@ from common.models import *
 #############################################    
 
 def main(argv):
-    parser = argparse.ArgumentParser(description="Classify text file(s) using a trained model")
-    parser.add_argument('-m', '--model', default="input.model", help="path to the input classification model file")
-    parser.add_argument('-i', '--idf', help="path to the idf reference model file")
-    parser.add_argument('-c', '--clean', action="store_true", help="remove special characters before classifying?")
-    parser.add_argument('-s', '--stopwords', action="store_true", help="remove stopwords before classifying?")    
-    parser.add_argument('-g', '--grams', default="2", help="number of grams to store, defaults to 2")
-    parser.add_argument('-r', '--recurse', action="store_true", help="recursively train on files in sub-directories")
-    parser.add_argument('-t', '--top', action="store_true", help="use top-model for classification")    
-    parser.add_argument('-x', '--explain', action="store_true", help="show explanation when classifying")    
-    parser.add_argument('filespec', help="path to one or more text files to classify against the specified model")
+
+    script_name = "classify.py"
+    
+    parser = argparse.ArgumentParser(description="Classify text files using a trained classification model")
+    parser.add_argument('filespec', help="path to one or more text files to classify optionally including wildcards, example folder-name/*.txt")
+    parser.add_argument('-c', '--clean', action="store_true", help="remove special characters when classifying")
+    parser.add_argument('-e', '--explain', action="store_true", help="show explanation after classifying")    
+    parser.add_argument('-g', '--grams', default="2", help="maximum number of grams to use, defaults to 2")
+    parser.add_argument('-i', '--idf', help="path to the idf reference model")
+    parser.add_argument('-m', '--model', default="input.model", help="path to the classification model to classify against")
+    parser.add_argument('-r', '--recurse', action="store_true", help="recurse into sub-directories when classifying")
+    parser.add_argument('-s', '--stopwords', action="store_true", help="remove stop words in stopwords.txt when classifying")    
+    parser.add_argument('-t', '--top', action="store_true", help="input classification model contains only top terms, was built with train -t")    
+    parser.add_argument('-x', '--email', action="store_true", help="remove email addresses when classifying")    
     args = parser.parse_args()
        
     # initialize
     nGrams = int(args.grams)
     list_stopwords = []
         
-    ########################################
-    # read the classification model
+    if args.stopwords:
+        print script_name, "reading: stopwords.txt:", 
+        list_stopwords = load_stopword_list('stopwords.txt')
+        if not list_stopwords:
+            print "error: failed to load stopwords.txt"
+            sys.exit(1)
+        print "ok,", str(len(list_stopwords)), "terms loaded"
 
-    print "classify.py: reading input model:", args.model,
+    print script_name, "reading: input model:", args.model,
     dictModel = load_classification_model(args.model)
     if not dictModel:
         print "error: couldn't load:", args.model
-        sys.exit(0)
-    print "ok", len(dictModel), "grams loaded"
+        sys.exit(1)
+    print "ok,", len(dictModel), "grams loaded"
         
-    ########################################
-    # read the idf model and handle -top
-
-    if args.idf:
-        print "classify.py: reading idf model:", args.idf,
-        dictIDF = load_classification_model(args.idf)    
-        if not dictIDF:
-            print "error: couldn't load:", args.idf
-            del dictIDF # can be large
-            sys.exit(0)
-        print "ok", len(dictIDF), "grams loaded"
-
     if args.idf and args.top:
-        print "classify.py: warning: -top specified, -idf specified but not required, ignoring"
+        print script_name, "warning: --top specified, ignoring specified --idf."
+    else:    
+        if args.idf:
+            print script_name, "reading: idf model:", args.idf,
+            dictIDF = load_classification_model(args.idf)    
+            if not dictIDF:
+                print "error: failed to load idf model"
+                del dictIDF # can be large
+                sys.exit(1)
+            print "ok,", len(dictIDF), "grams loaded"
     
     if not args.top and not args.idf:
-        print "classify.py: error: -idf required but not specified."
-        sys.exit(0)
+        print script_name, "error: --idf required but not specified."
+        sys.exit(1)
         
-    ########################################
     # read the files to classify
     
     if args.filespec:
         lstFiles = glob.glob(args.filespec)
     else:
-        print "classify.py: filespec missing!"
-        sys.exit(0)
+        print script_name, "no input file(s) specified:", args.filespec
+        sys.exit(1)
     
     if lstFiles == []:
-        print "classify.py: can't open:", args.filespec
+        print script_name, "no files found:", args.filespec
         if args.idf:
             del dictIDF
         del dictModel
-        sys.exit(0)
-
-    if args.stopwords:
-        print "classify.py: loading: stopwords.txt:", 
-        list_stopwords = load_stopword_list('stopwords.txt')
-        if not list_stopwords:
-            print "error"
-            del dictIDF
-            del dictModel
-            sys.exit(0)
-        print "ok", str(len(list_stopwords)), "terms loaded"
-            
-    ########################################
+        sys.exit(1)
+           
     # iterate through filespec, processing each file
             
     for sFile in lstFiles:
@@ -101,7 +95,7 @@ def main(argv):
                     lstFiles.append(sNewFile)
             continue
         
-        print "classify.py:", sFile, 
+        print script_name, "classifying:", sFile, 
         try:
             f = open(sFile, 'r')
         except Exception, e:
@@ -113,33 +107,36 @@ def main(argv):
             lstBody = f.readlines()
         except Exception, e:
             print "error reading:", e
-            f.close()
             continue
         f.close()
+ 
+        # clean email       
+        if args.email:
+            lstBody = remove_email_addresses(lstBody)
     
         # convert lstBody to sBody
-        sBody = ""
-        sBody = ' '.join(lstBody)
-        sBody = sBody.replace("\n","")
-        sBody = sBody.strip()
-        sBody = sBody.lower()
+        sBody = lst_to_string(lstBody)
     
         # remove stop chars, if requested
         if args.clean:
             sBody = remove_stop_chars(sBody)
                     
         dictInput = {}
-        dictInput = train_classification_model(dictInput, sBody, nGrams)
-        # don't use -top for normalization when classifying (only training)
-        dictInput = normalize_classification_model(dictInput, False, list_stopwords)
+        dictInput = train_classification_model(dictInput, sBody, nGrams, list_stopwords)
+        # don't ever use -top for normalization when classifying (only training)
+        dictInput = normalize_classification_model(dictInput, False)
         
+        print "(", str(len(dictInput)), ",",
+        print "%1.6f" % (float(len(dictInput)) / float(len(dictModel))),
+        print ")",
+                
         if args.top:
             list_classify = classify_top(dictInput, dictModel, nGrams)
         else:
             list_classify = classify(dictInput, dictModel, dictIDF, nGrams)
         fScore = list_classify[0]
         dictExplain = list_classify[1]
-        print "confidence:", 
+        print "->", 
         print "%1.2f" % fScore,
         mark = "\t"
         if fScore > .667:

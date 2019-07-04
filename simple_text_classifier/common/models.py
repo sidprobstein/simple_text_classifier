@@ -16,16 +16,20 @@ from utils import count_grams
 
 #############################################    
 
-def train_classification_model(dictModel, sString, nGrams):
+def train_classification_model(dictModel, sString, nGrams, list_stopwords = None):
     
     lstModel = []
     nWords = 0
     sGram = ""
+    xMinToken = 2
     
     if dictModel == None:
         dictModel = {}
-    
+        
     for token in sString.split():
+        if (token in list_stopwords) or (len(token) < xMinToken):
+            # ignore
+            continue
         # add to the gram list
         lstModel.append(token)
         nWords = nWords + 1
@@ -42,6 +46,7 @@ def train_classification_model(dictModel, sString, nGrams):
                         dictModel[sGram] += 1
                     else:
                         dictModel[sGram] = 1
+                        nWords = nWords + 1
             sLast = sGram
     # end for
                     
@@ -65,82 +70,29 @@ def train_classification_model(dictModel, sString, nGrams):
 
 def normalize_classification_model(dictModel, bTop = False, list_stopwords = None):
 
+    script_name = "models.normalize_classification_module"
+
     if not dictModel.has_key("_words"):
-        print "normalize_classification_model: warning, _words not found in classification model"
+        print script_name, "warning, _words not found in classification model"
         return None
     
     if not dictModel.has_key("_files"):
-        print "normalize_classification_model: warning, _files not found in classification model"
+        print script_name, "warning, _files not found in classification model"
         return None
-
-    # remove stopwords 
-    k = 0
-    for term in dictModel.keys():
-        k = k + 1
-        if not term[0] == "_":
-            grams_term = count_grams(term)
-            if grams_term == 1:
-                if term in list_stopwords or len(term) == 1:
-                    del dictModel[term]
-                    dictModel['_words'] = dictModel['_words'] - 1
-                # end if
-            else:                    
-                stopwords_in_gram = 0
-                for g in term.split('_'):
-                    # count combinations of stopwords and 1-letter characters
-                    # this will have some error rate
-                    if (g in list_stopwords) or (len(g) == 1):
-                        stopwords_in_gram = stopwords_in_gram + 1
-                if stopwords_in_gram == grams_term: 
-                    # it's all stopwords
-                    del dictModel[term]
-                    dictModel['_words'] = dictModel['_words'] - 1
     
     # to do: look at problem of xyz xy eg high ranking officials and ranking officials
-    # to do: is explciitly_said as important as
+    # to do: why is explciitly_said high value?
                         
     # file size
     dictNormalized = {}
     fAverage = float(dictModel["_words"]) / float(dictModel["_files"])
+ 
     for entry in dictModel.iterkeys():
         # just copy meta entries
         if entry[0:1] != "_":
             # normalize non-meta entries
-            dictNormalized[entry] = float(dictModel[entry]) / fAverage
-    
-#     # handle gram dupes e.g. x (w1) xy (w2), w1 > w2, then give xy w1
-#     k = 0
-#     work = len(dictNormalized)
-#     page = (work / 100) / 100 * 100
-#     lstSorted = sorted(dictNormalized.iteritems(), key=operator.itemgetter(1), reverse=True)
-#     for (t1, c1) in lstSorted:
-#         if c1 < 0.2:
-#             break
-#         if not t1[0] == "_":
-#             # not a control term like _word
-#             grams_t1 = count_grams(t1)
-#             for (t2, c2) in lstSorted:
-#                 if c2 < 0.1:                    
-#                     break
-#                 if not t2[0] == "_":
-#                     grams_t2 = count_grams(t2)
-#                     if grams_t2 > grams_t1:
-#                         if c1 > c2:
-#                             # higher weighted, check for match
-#                             if t2.startswith(t1 + "_") or t2.endswith("_" + t1):
-#                                 # boost
-#                                 dictModel[t2] = c1
-#                             # end if
-#                         # end if
-#                     # end if
-#                 # end if
-#             # end for
-#         # end if
-#         k = k + 1
-#         if k % page == 0:
-#             print "%",
-#     # end for
-        
+            dictNormalized[entry] = float(dictModel[entry]) / fAverage        
+            
     if bTop:
         dictTop = {}
         gramCount = {}
@@ -170,19 +122,51 @@ def normalize_classification_model(dictModel, bTop = False, list_stopwords = Non
 
 #############################################    
 
+def compute_average_frequency_by_length(dictModel):
+    
+    if dictModel == {}:
+        return {}
+    
+    dictLengths = {}
+    big = 0
+    for k in dictModel.keys():
+        l = len(k)
+        if l > big:
+            big = l
+        kl = "_f" + str(l)
+        kc = "_c" + str(l)
+        if dictLengths.has_key(kl):
+            dictLengths[kl] = dictLengths[kl] + dictModel[k]
+            dictLengths[kc] = dictLengths[kc] + 1 
+        else:
+            dictLengths[kl] = dictModel[k]         
+            dictLengths[kc] = 1 
+            
+    dictFreqs = {}
+    for k1 in dictLengths.keys():
+        if k1[1:2] == "f":
+            k = k1[2:]
+            kf = "_f" + k
+            kc = "_c" + k
+            dictFreqs[k] = float(dictLengths[kf]) / float(dictLengths[kc])
+    
+    return dictFreqs
+
+#############################################    
+
 def save_classification_model(dictModel, sFile):
 
     try:
         fo = open(sFile, 'w')
     except Exception, e:   
-        print "error:", e             
-        fo.close()
+        print "error opening:", e             
         return None
+    # to do: sort the model, descending
+    
     try:
         json.dump(dictModel, fo, sort_keys=False, indent=4, separators=(',', ':'))
     except Exception, e:
-        print "error:", e
-        fo.close()
+        print "error writing:", e
         return None
     fo.close()
 
@@ -197,13 +181,13 @@ def load_classification_model(sFile):
     try:
         fi = open(sFile, 'r')
     except Exception, e:   
-        print "error:", e             
+        print "error opening:", e             
         return None
     dictModel = {}
     try:
         dictModel = json.load(fi)
     except Exception, e:
-        print "error:", e
+        print "error reading:", e
         fi.close()
         return None
     fi.close()
@@ -216,6 +200,8 @@ def load_classification_model(sFile):
 
 def classify(dictInput, dictModel, dictIDF, nGrams):
         
+    script_name = "models.classify"
+    
     if dictInput == {}:
         return None
 
@@ -226,51 +212,69 @@ def classify(dictInput, dictModel, dictIDF, nGrams):
         return None
 
     if dictInput.has_key("_words"):
-        print "classify: error: input model is not normalized, _words key found"
+        print script_name, "error: input model is not normalized, _words key found"
 
     if dictModel.has_key("_words"):
-        print "classify: error: reference model is not normalized, _words key found"
+       print script_name, "error: reference model is not normalized, _words key found"
 
     if dictIDF.has_key("_words"):
-        print "classify: error: idf model is not normalized, _words key found"
-        
-    nHits = 0
+        print script_name, "error: idf model is not normalized, _words key found"
+    
     fScore = 0.0
     dictExplain = {}
-    
-    # to do: how to handle serdar_argic, which is very present in talk.politics.mideast but not the idf model built from all???
+        
+    size_adjust = 1.0    
+    if len(dictInput) < 75:
+        size_adjust = 2.0
+    if len(dictInput) < 25:
+        size_adjust = 4.5
+    input_vs_model = (float(len(dictInput)) / float(len(dictModel))) # e.g. .004
+    if input_vs_model > .002:
+        size_adjust = 0.67
+    # presumably, very large documents will need more adjustment
+        
+    # compute average frequencies for various lengths
+    dict_freqs = compute_average_frequency_by_length(dictModel)
      
-    for gram in dictInput.iteritems():
-        # if it is in the model...
-        if dictModel.has_key(gram[0].strip()):
-            gram_count = count_grams(gram[0])
-            nLen = len(gram[0].strip())
-            if float(dictInput[gram[0].strip()]) > 1.0:
-                # if the gram is extremely common in the text, ignore it
-                pass
+    for gram in dictInput.keys():
+        if float(dictInput[gram]) > 1.0:
+            continue
+        gram_count = count_grams(gram)
+        if gram_count > 1:
+            gc = 0
+            gl = 0
+            for g in gram.split('_'):
+                gc = gc + 1
+                gl = gl + len(g)
+            gram_average_length = float(gl) / float(gc)
+        else:
+            gram_average_length = len(gram)
+
+        # is it in the classification model?
+        if dictModel.has_key(gram):
+            idf = dictModel[gram]
+            if dictIDF.has_key(gram):
+                if dictIDF[gram] > idf:
+                    idf = dictIDF[gram]
+        else:
+            continue
+                                
+        # compute tf/idf
+        fContrib = float( 
+                         ( float(dictInput[gram]) / float(idf) ) * ( math.log1p(gram_average_length) * ( gram_average_length ** 2 ) )
+                        ) 
+
+        # aggregate                    
+        if fContrib > 1.0:
+            # accept notable contributions only
+            fScore = fScore + fContrib
+            # add to explain dictionary 
+            if dictExplain.has_key(gram):
+                dictExplain[gram] = dictExplain[gram] + fContrib
             else:
-                if dictIDF.has_key(gram[0].strip()):
-                    # if the IDF model has a reference count, use it:
-                    fContrib = float( 
-                                     ( float(dictInput[gram[0].strip()]) / float(dictIDF[gram[0].strip()]) ) * ( float(nLen) / 2.0 )
-                                    )
-                else:
-                    # assume it is rare, i.e. 0.5
-                    # to do: evaluate other numbers for this
-                    fContrib = float( 
-                                     ( float(dictInput[gram[0].strip()]) / 0.5 ) * ( float(nLen) / 2.0 )
-                                    )
-            if fContrib > 1.0:
-                # accept notable contributions only
-                fScore = fScore + fContrib
-                # count them as a hit
-                nHits = nHits + 1
-                # add to explain dictionary 
-                if dictExplain.has_key(gram[0]):
-                    dictExplain[gram[0]] = dictExplain[gram[0]] + fContrib
-                else:
-                    dictExplain[gram[0]] = fContrib
+                dictExplain[gram] = fContrib
         # end if
+        
     # end for
 
     # aggregate the top 20 hits into the score
@@ -290,6 +294,10 @@ def classify(dictInput, dictModel, dictIDF, nGrams):
         top = top - 1
         if top == 0:
             break
+    
+    # adjust small models
+    fScore1 = fScore1 * size_adjust
+
     # end for
     if len(dictInput) < 100:
         fScoreFinal = float( float(fScore1) / ( float(xTop) / 1.5 ) )
@@ -305,6 +313,8 @@ def classify(dictInput, dictModel, dictIDF, nGrams):
 
 def classify_top(dictInput, dictModel, nGrams):
         
+    script_name = models.classify_top
+    
     if dictInput == {}:
         return None
     
@@ -312,10 +322,10 @@ def classify_top(dictInput, dictModel, nGrams):
         return None
     
     if dictInput.has_key("_words"):
-        print "classify: error: input model is not normalized, _words key found"
+        print script_name, "error: input model is not normalized, _words key found"
 
     if dictModel.has_key("_words"):
-        print "classify: error: reference model is not normalized, _words key found"
+        print script_name, "error: reference model is not normalized, _words key found"
         
     dictExplain = {}
          
@@ -346,7 +356,7 @@ def classify_top(dictInput, dictModel, nGrams):
 
 #############################################    
 
-def dump_entries(dictModel, nNumber, grams, bDescending):
+def dump_entries(dictModel, nNumber, grams, sFilter, bDescending):
 
     if dictModel == None:
         return None
@@ -363,11 +373,17 @@ def dump_entries(dictModel, nNumber, grams, bDescending):
     else:
         dictSorted = sorted(dictModel.iteritems(), key=operator.itemgetter(1), reverse=False)        
     for (term, count) in dictSorted:
+        # filter grams
         if int(grams) > 0:
             if count_grams(term) == int(grams):
                 print term, count
-        else:
-            print term,count
+                continue
+        else: 
+            if sFilter:
+                if sFilter in term:
+                    print term, count
+            continue
+        print term,count
         # end if
         top = top - 1
         if top == 0:
@@ -379,9 +395,9 @@ def dump_entries(dictModel, nNumber, grams, bDescending):
 
 #############################################    
 
-def dump_top(dictModel, nNumber, grams=1):
+def dump_top(dictModel, nNumber, grams=1, sFilter=None):
 
-    return dump_entries(dictModel, nNumber, grams, True)
+    return dump_entries(dictModel, nNumber, grams, sFilter, True)
 
 # end dump_top_n_model
 

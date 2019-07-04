@@ -17,10 +17,14 @@ from common.models import *
 #############################################    
 
 def main(argv):
+
+    script_name = "inspect.py"
+    
     parser = argparse.ArgumentParser(description="Inspect a classification model")
-    parser.add_argument('-g', '--grams', default="0", help="number of grams to inspect, defaults to all")
-    parser.add_argument('-n', '--number', default="100", help="number of top results to show, defaults to 100")
-    parser.add_argument('filespec', help="path to the classification model(s)")
+    parser.add_argument('filespec', help="path to one or more classification models")
+    parser.add_argument('-f', '--filter', help="filters the model by string")
+    parser.add_argument('-g', '--grams', default="0", help="maximum number of grams to use, defaults to all")
+    parser.add_argument('-n', '--number', default="100", help="the number of model entries to show, defaults to 100")
     args = parser.parse_args()
     
     # initialize
@@ -30,11 +34,11 @@ def main(argv):
     if args.filespec:
         lstFiles = glob.glob(args.filespec)
     else:
-        sys.exit(-1)
+        sys.exit(1)
         
     if lstFiles == []:
-        print "train.py: can't open:", args.filespec
-        sys.exit(-1)
+        print script_name, "no files found:", args.filespec
+        sys.exit(1)
     
     for sFile in lstFiles:
         
@@ -46,15 +50,20 @@ def main(argv):
                     lstFiles.append(sNewFile)
             continue
                     
-        print "train.py: inspecting:", sFile,
+        print script_name, "reading:", sFile,
         
         dictModel = load_classification_model(sFile)
         if not dictModel:
-            print "error: couldn't load:", sFile
-            sys.exit(0)
-        print "ok", len(dictModel), "grams loaded, dumping top", args.number, str(args.grams) + "-grams"
+            print script_name, "error: couldn't load:", sFile
+            continue
+        print "ok,", len(dictModel), "grams loaded"
+        print script_name, "inspecting: top", args.number, str(args.grams) + "-grams", 
+        if args.filter:
+            print "filter:", args.filter
+        else:
+            print
         print "--------------------------------------------------------------------------------"
-        dump_top(dictModel, args.number, args.grams)
+        dump_top(dictModel, args.number, args.grams, args.filter)
         print "--------------------------------------------------------------------------------"
     
     # delete, since these can be large    
