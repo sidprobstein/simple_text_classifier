@@ -9,6 +9,7 @@
 import os
 import sys
 import argparse
+import operator
 
 from bs4 import BeautifulSoup
 
@@ -39,7 +40,7 @@ def main(argv):
     html = ' '.join(html_list)
        
     # setup    
-    section = 1
+    section = 0
     dict_article = {}
     dict_article[section] = {}
     dict_article[section]['text'] = ""
@@ -47,6 +48,8 @@ def main(argv):
     dict_article[section]['len'] = 0
     dict_article[section]['links'] = 0
     dict_article[section]['density'] = 0.0
+    dict_rank = {}
+    dict_rank[section] = 0.0
 
     chunk_tags = [ 'title', 'div' ]
     remove_tags = [ 'script', 'style', 'link', '!--' ]
@@ -108,7 +111,11 @@ def main(argv):
                         dict_article[section]['links'] = section_links
                         if section_len > 0:
                             dict_article[section]['density'] = float( float(section_links) / float(section_len) )
-                        # initialize next section
+                            if dict_article[section]['density'] == 0:
+                                dict_rank[section] = float(dict_article[section]['len'])
+                            else:
+                                dict_rank[section] = float( float(dict_article[section]['density']) * float(dict_article[section]['len']))
+                       # initialize next section
                         section = section + 1
                         dict_article[section] = {}
                         dict_article[section]['text'] = ""
@@ -116,6 +123,7 @@ def main(argv):
                         dict_article[section]['len'] = 0
                         dict_article[section]['links'] = 0
                         dict_article[section]['density'] = 0.0
+                        dict_rank[section] = 0.0
                         section_len = 0
                         section_links = 0
                         section_link_density = 0.0
@@ -154,23 +162,24 @@ def main(argv):
     # end for
                 
     # calculate density for last section if necessary
-    if dict_article[section]['text'] == "":
-        del dict_article[section]
-    else:
-        dict_article[section]['len'] = section_len
-        dict_article[section]['links'] = section_links
-        if section_len > 0:
-            dict_article[section]['density'] = float( float(section_links) / float(section_len) )
+    dict_article[section]['tag'] = tag
+    dict_article[section]['len'] = section_len
+    dict_article[section]['links'] = section_links
+    if section_len > 0:
+        dict_article[section]['density'] = float( float(section_links) / float(section_len) )
+        if dict_article[section]['density'] == 0:
+            dict_rank[section] = float(dict_article[section]['len'])
         else:
-            dict_article[section]['density'] = 0.0
+            dict_rank[section] = float( float(dict_article[section]['density']) * float(dict_article[section]['len']))
+                                            
+    ranked_sections = sorted(dict_rank.iteritems(), key=operator.itemgetter(1), reverse=True)
+    
+    for (k, r) in ranked_sections:
+        if r > 0:
+            print str(r), ":", dict_article[k]['text']
+    
 
-    for key in dict_article:
-        if len(dict_article[key]['text']) > 0:
-            print key, 
-            print dict_article[key]
-                
-                
-                
+
 #                     section_links = section_links + 1
 #                 else:
 #                     section_len = section_len + 1
