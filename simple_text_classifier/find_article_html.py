@@ -51,8 +51,8 @@ def main(argv):
     dict_rank = {}
     dict_rank[section] = 0.0
 
-    chunk_tags = [ 'title', 'div' ]
-    remove_tags = [ 'script', 'style', 'link', '!--' ]
+    chunk_tags = [ 'div', 'title' ]
+    remove_tags = [ 'script', 'style', 'link' ]
     ignore_chars = [ '\n', '\t', '\r' ]
 
     is_tag = False
@@ -68,6 +68,7 @@ def main(argv):
 
     # state machine:
     for ch in html:   
+        # print "\ttag:", tag, "\t:is_tag:", is_tag, "\tis_close_tag:", is_close_tag, "\tlink:", is_link, "\temit:", emit, "\t:", ch
         # ignore new lines     
         if ch in ignore_chars:
             continue
@@ -82,7 +83,6 @@ def main(argv):
                 last = ch
                 continue
         # end if
-        # print ch, ord(ch), "\tis_tag:", is_tag, "\tis_close_tag:", is_close_tag, "\tlink:", is_link, "\temit:", emit
         if ch == '<':
             if last in ['"', "'"]:
                 # quoted, ignore 
@@ -115,6 +115,8 @@ def main(argv):
                                 dict_rank[section] = float(dict_article[section]['len'])
                             else:
                                 dict_rank[section] = float( float(dict_article[section]['density']) * float(dict_article[section]['len']))
+                            if dict_article[section]['tag'] == 'title':
+                                dict_rank[section] = dict_rank[section] * 1000
                        # initialize next section
                         section = section + 1
                         dict_article[section] = {}
@@ -130,8 +132,9 @@ def main(argv):
                     # end if
                 # end for
             else:
+                # starting tag
                 # note we don't store spaces in tags!!
-                if tag.lower().startswith('ahref'):
+                if tag.lower().startswith('a'):
                     in_link = True
                 for t in remove_tags:
                     if tag.startswith(t):
@@ -144,9 +147,7 @@ def main(argv):
             # in tag
             # note we will never get ignore chars or spaces!
             if ch == '/':
-                # only honor at beginning of tag
-                if tag == "":
-                    is_close_tag = True
+                is_close_tag = True
             else:
                 tag = tag + ch
         else:
@@ -171,25 +172,27 @@ def main(argv):
             dict_rank[section] = float(dict_article[section]['len'])
         else:
             dict_rank[section] = float( float(dict_article[section]['density']) * float(dict_article[section]['len']))
+        if dict_article[section]['tag'] == 'title':
+            dict_rank[section] = dict_rank[section] * 1000
                                             
     ranked_sections = sorted(dict_rank.iteritems(), key=operator.itemgetter(1), reverse=True)
     
+    type = ""
     for (k, r) in ranked_sections:
         if r > 0:
-            print str(r), ":", dict_article[k]['text']
-    
-
-
-#                     section_links = section_links + 1
-#                 else:
-#                     section_len = section_len + 1
-#             last = i
-#         if section_len > 0:
-#             link_density = float( float(section_links) / float(section_len) )
-# #            if link_density < 0.3:
-#             print ( link_density, div.getText() )
-            
-            
+            if dict_article[k]['density'] < .1:
+                type = "body"
+            if dict_article[k]['density'] > .6:
+                type = "related"
+            if dict_article[k]['density'] > .8:
+                type = "navigation"
+            if type == "body":
+                if dict_article[k]['len'] < 40:
+                    type = "fragment"
+            if dict_article[k]['tag'] == 'title':
+                type = 'title' 
+            print type, int(r), dict_article[k]['density'], dict_article[k]['text']
+                        
 # end main
 
 #############################################    
