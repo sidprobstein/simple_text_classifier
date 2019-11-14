@@ -50,8 +50,7 @@ def train_classification_model(dictModel, sString, nGrams, list_stopwords = None
             sLast = sGram
     # end for
                     
-    # compute counts
-    
+    # compute counts    
     if dictModel.has_key('_words'):
         dictModel['_words'] = dictModel['_words'] + nWords
     else:
@@ -122,6 +121,103 @@ def normalize_classification_model(dictModel, bTop = False, list_stopwords = Non
 
 #############################################    
 
+def consolidate_grams_old(dictModel):
+     
+    # if xyz and xy and yz are in the model
+    # take the highest item and drop the others, e.g.
+
+    # real_world 0.0047264573991
+    # real 0.0067264573991
+        
+    # to do: make sure second loop starts at c1
+    # to do: go no more than some % past c
+    
+    dictSorted = sorted(dictModel.iteritems(), key=operator.itemgetter(1), reverse=True)
+    for (t1, c1) in dictSorted:
+        g1 = count_grams(t1)
+        removed = 0
+        for (t2, c2) in dictSorted:
+            g2 = count_grams(t2)
+            if g1 < g2:
+                if t2.startswith(t1 + '_') or t2.endswith('_' + t1):
+                    if c1 >= c2:
+                        if dictModel.has_key(t1):
+                            dictModel[t2] = dictModel[t1]
+                            del dictModel[t1]
+                        removed = removed + 1
+                        continue
+                # end if
+            # end if
+            if g1 > g2:
+                if t1.startswith(t2 + '_') or t1.endswith('_' + t2):
+                    if c1 >= c2:
+                        if dictModel.has_key(t2):
+                            del dictModel[t2]
+                        removed = removed + 1
+                        continue                    
+            # end if
+            if removed == g1:
+                break
+        # end for
+        
+    # end for
+    
+    return dictModel
+
+#############################################    
+
+def consolidate_grams(dictModel):
+         
+    lstSorted = sorted(dictModel.iteritems(), key=operator.itemgetter(1), reverse=True)
+    
+    p1 = 0
+    while p1 < len(lstSorted):
+        (t1, c1) = lstSorted[p1]
+        g1 = count_grams(t1)
+        if p1 % 10000 == 0:
+            print "#",
+        p2 = p1 + 1
+        while p2 < len(lstSorted):
+            removed = 0
+            (t2, c2) = lstSorted[p2]
+            g2 = count_grams(t2)
+            if g1 < g2:
+                if t2.startswith(t1 + '_') or t2.endswith('_' + t1):
+                    if c1 >= c2:
+                        removed = removed + 1
+                        if dictModel.has_key(t1):
+                            dictModel[t2] = dictModel[t1]
+                            del dictModel[t1]
+                        # end if
+                    # end if
+                # end if
+            # end if
+            if g1 > g2:
+                if t1.startswith(t2 + '_') or t1.endswith('_' + t2):
+                    if c1 >= c2:
+                        removed = removed + 1
+                        if dictModel.has_key(t2):
+                            del dictModel[t2]
+                        # end if
+                    # end if
+                # end if                   
+            # end if
+            if removed == g1:
+                # to do: move on to next p1
+                break
+            if c2 * 1.2 >= c1:
+                break
+            p2 = p2 + 1
+            if p2 % 10000 == 0:
+                print "#",
+        # end while
+        p1 = p1 + 1
+    # end while
+        
+    return dictModel 
+
+#############################################    
+
 def compute_average_frequency_by_length(dictModel):
     
     if dictModel == {}:
@@ -151,6 +247,18 @@ def compute_average_frequency_by_length(dictModel):
             dictFreqs[k] = float(dictLengths[kf]) / float(dictLengths[kc])
     
     return dictFreqs
+
+#############################################    
+
+def trim_classification_model(dictModel, fMin):
+    
+    dictNew = {}
+    for key in dictModel.keys():
+        if float(dictModel[key]) > float(fMin):
+            dictNew[key] = dictModel[key]
+    # end for
+    
+    return dictNew
 
 #############################################    
 
@@ -222,16 +330,29 @@ def classify(dictInput, dictModel, dictIDF, nGrams):
     
     fScore = 0.0
     dictExplain = {}
-        
-    size_adjust = 1.0    
-    if len(dictInput) < 75:
+                
+    # this is applied directly to the final score, so use sparingly
+    size_adjust = 1.0  
+    # upper
+    if len(dictInput) > 500:
+        size_adjust = 0.7
+    # lower
+    if len(dictInput) < 100:
         size_adjust = 2.0
     if len(dictInput) < 25:
-        size_adjust = 4.5
-    input_vs_model = (float(len(dictInput)) / float(len(dictModel))) # e.g. .004
-    if input_vs_model > .002:
-        size_adjust = 0.67
-    # presumably, very large documents will need more adjustment
+        size_adjust = 6.0
+    if len(dictInput) < 10:
+        size_adjust = 10.0
+    if len(dictInput) < 3:
+        size_adjust = 20.0
+    if len(dictInput) < 2:
+        size_adjust = 33.0
+        
+    # tbd: this needs work...
+#     input_vs_model = (float(len(dictInput)) / float(len(dictModel))) # e.g. .004
+#     if input_vs_model > .002:
+#         size_adjust = 0.67
+    # print size_adjust,
         
     # compute average frequencies for various lengths
     dict_freqs = compute_average_frequency_by_length(dictModel)
@@ -313,7 +434,7 @@ def classify(dictInput, dictModel, dictIDF, nGrams):
 
 def classify_top(dictInput, dictModel, nGrams):
         
-    script_name = models.classify_top
+    script_name = "classify_top"
     
     if dictInput == {}:
         return None
@@ -371,19 +492,37 @@ def dump_entries(dictModel, nNumber, grams, sFilter, bDescending):
     if bDescending:
         dictSorted = sorted(dictModel.iteritems(), key=operator.itemgetter(1), reverse=True)
     else:
-        dictSorted = sorted(dictModel.iteritems(), key=operator.itemgetter(1), reverse=False)        
+        dictSorted = sorted(dictModel.iteritems(), key=operator.itemgetter(1), reverse=False)       
     for (term, count) in dictSorted:
-        # filter grams
         if int(grams) > 0:
             if count_grams(term) == int(grams):
-                print term, count
+                # grams specified
+                if sFilter:
+                    # filter specified
+                    if sFilter in term:
+                        # filter and gram match
+                        print term, count
+                    else:
+                        # filter non-match
+                        continue
+                else:
+                    # no filter, gram match
+                    print term, count
+            else:
+                # no gram match
                 continue
         else: 
             if sFilter:
+                # filter specified
                 if sFilter in term:
+                    # filter match
                     print term, count
-            continue
-        print term,count
+                else:
+                    # filter no match
+                    continue
+            else:
+                # no filter, output
+                print term, count
         # end if
         top = top - 1
         if top == 0:

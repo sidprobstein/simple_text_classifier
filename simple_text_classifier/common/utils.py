@@ -8,29 +8,29 @@
 
 #############################################    
 
-def remove_stop_chars(sString):
+def remove_stop_chars(unclean_string):
         
-    sCleaned = ""
-    for token in sString:
-        if token.isalpha():
-            sCleaned = sCleaned + token
+    clean_string = ""            
+    for ch in unclean_string:
+        if ch.isalpha():
+            clean_string = clean_string + ch
             continue
-        if token == "'":
-            sCleaned = sCleaned + token
+        if ch == "'":
+            clean_string = clean_string + ch
             continue
-        if ord(token) < 65:
-            sCleaned = sCleaned + ' '
+        if ord(ch) < 65:
+            clean_string = clean_string + " "
 
-    # remove 's
-    if sCleaned.find("'s") > -1:
-        sCleaned = sCleaned.replace("'s", "")
+    # remove ALL 's
+    if clean_string.find("'s") > -1:
+        clean_string = clean_string.replace("'s", "")
         
     # remove ' (e.g. don't, isn't)
-    if sCleaned.find("'") > -1:
-        sCleaned = sCleaned.replace("'", "")
-                
-    return sCleaned.strip()
-
+    if clean_string.find("'") > -1:
+        clean_string = clean_string.replace("'", "")
+        
+    return clean_string
+        
 #############################################    
 
 def lst_to_string(lst_string):
@@ -114,15 +114,7 @@ def load_stopword_list(filename):
         lst_stopwords.append(l.strip())
         
     return lst_stopwords
-    
-#############################################    
-
-def prepare_string(sString):
-    
-    sCleaned = remove_stop_chars(sString)
-    sCleaned = remove_stop_words(sCleaned)
-    return sCleaned
-    
+        
 #############################################    
 
 def count_grams(term):

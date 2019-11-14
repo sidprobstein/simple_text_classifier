@@ -126,10 +126,12 @@ def main(argv):
         # don't ever use -top for normalization when classifying (only training)
         dictInput = normalize_classification_model(dictInput, False)
         
-        print "(", str(len(dictInput)), ",",
-        print "%1.6f" % (float(len(dictInput)) / float(len(dictModel))),
-        print ")",
-                
+#         print "(", str(len(dictInput)), ",",
+#         print "%1.6f" % (float(len(dictInput)) / float(len(dictModel))),
+#         print ")",
+
+        top_boost = False
+        
         if args.top:
             list_classify = classify_top(dictInput, dictModel, nGrams)
         else:
@@ -145,6 +147,8 @@ def main(argv):
             mark = "**"
         if fScore > .89:
             mark = "***"
+        if top_boost:
+            mark = mark + "+"
         print mark,
         if args.explain:
             print "\t[",

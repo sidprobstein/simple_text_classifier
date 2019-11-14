@@ -53,7 +53,7 @@ def main(argv):
     if lstFiles == []:
         print script_name, "file not found:", args.filespec
         sys.exit(1)
-    
+            
     for sFile in lstFiles:
         
         # process the files
@@ -93,12 +93,11 @@ def main(argv):
         # remove stop chars, if requested
         if args.clean:
             sBody = remove_stop_chars(sBody)
+        
+        # to do: redo this so it runs as a single pass
                             
         # build model
         dictModel = train_classification_model(dictModel, sBody, nGrams, list_stopwords)
-        if not dictModel:
-            print script_name, "error: training failed"
-            sys.exit(1)
         
     # end for
     
@@ -113,6 +112,16 @@ def main(argv):
         print script_name, "error: failed to normalize model"
         sys.exit(1)
     print "ok,", len(dictModel), "terms loaded"
+    
+    # print script_name, "consolidating grams:",
+    # now consolidate the grams
+    # dictModel = consolidate_grams(dictModel)
+    # print "ok"
+
+    # print script_name, "trimming model:",
+    # now remove irrelevant? grams
+    # dictModel = trim_classification_model(dictModel, .001)
+    # print "ok"
     
     # write out the model
     print script_name, "writing:", args.outputfile, 
