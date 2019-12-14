@@ -12,7 +12,7 @@ import argparse
 import operator
 
 from bs4 import BeautifulSoup
-from __builtin__ import False
+# from __builtin__ import False
 
 #############################################    
 

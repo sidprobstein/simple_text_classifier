@@ -125,9 +125,8 @@ def consolidate_grams_old(dictModel):
      
     # if xyz and xy and yz are in the model
     # take the highest item and drop the others, e.g.
-
-    # real_world 0.0047264573991
-    # real 0.0067264573991
+    # boost xyz and drop xy and yz
+    # tbd: drop xx
         
     # to do: make sure second loop starts at c1
     # to do: go no more than some % past c
